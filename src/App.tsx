@@ -1,34 +1,50 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import axios from "axios";
 import './App.css'
+import data from './assets/languages.json'
 
 function App() {
   const [count, setCount] = useState(0)
+  const [input, setInput] = useState('')
+  const [list, setList] = useState<Array<string>>([])
 
+  function getRandomProperty (obj) {
+    const keys = Object.keys(obj);
+    return obj[keys[ keys.length * Math.random() << 0]];
+  };
+
+  function getKey (obj, val: string) {
+    return Object.keys(obj).find(key => obj[key] === val)
+  }
+  async function translate(){
+
+    let sourceText = input;
+    let sourceLang = 'en';
+    let targetLang;
+    for (let i = 0; i < count; i++) {
+      targetLang = i < count - 1 ? getRandomProperty(data) : 'en'
+      const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="+ sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodeURI(sourceText);
+      const res = await axios.get(url);
+      sourceText = res.data[0][0][0];
+      setList(arr => [...arr, sourceText])
+      sourceLang = targetLang;
+    }
+  }
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className='container'>
+      <div className='input'>
+        <input onInput={e => setInput(e.target.value)} placeholder='Text to translate'/>
+        <input type='number' defaultValue={count} onInput={e => setCount(e.target.value)} placeholder='numberOfTimes'/>
+        <button onClick={translate}>Submit</button>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div className='list'>
+        <ul>
+          {list.map(item => (
+              <li>{item}</li>
+          ))}
+        </ul>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
 
